@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "assistant": {
+      "command": "node",
+      "args": ["documents/Repo/assistant-bridge/mcp-assistant.mjs"],
+      "env": {
+        "ASSISTANT_API_BASE": "http://localhost:8080/v1",
+        "ASSISTANT_API_KEY": "",
+        "ASSISTANT_MODEL": "assistant"
+      }
+    }
+  }
+}
