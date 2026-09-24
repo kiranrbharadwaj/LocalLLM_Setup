@@ -26,7 +26,7 @@ async function callAssistant(prompt, context) {
   try {
     log(`→ Asking: "${prompt.slice(0, 120)}${prompt.length > 120 ? "…" : ""}"`);
 
-    const res = await fetch(`${API_BASE}/chat`, {
+    const res = await fetch(`${API_BASE}/chat/completions`, {
       method: "POST",
       signal: controller.signal,
       headers: {
