@@ -182,7 +182,8 @@ def stream_chat_completion(
             except json.JSONDecodeError:
                 continue
 
-            delta = obj.get("choices", [{}])[0].get("delta", {})
+            choices = obj.get("choices") or []
+            delta = choices[0].get("delta", {}) if choices else {}
             content = delta.get("content") or ""
             if content:
                 if ttft is None:
