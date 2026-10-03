@@ -6,10 +6,10 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-const API_BASE   = process.env.ASSISTANT_API_BASE   ?? "http://localhost:8080/v1";
+const API_BASE   = process.env.ASSISTANT_API_BASE   ?? "http://127.0.0.1:1234/v1";
 const API_KEY    = process.env.ASSISTANT_API_KEY    ?? "";
-const MODEL      = process.env.ASSISTANT_MODEL      ?? "assistant";
-const TIMEOUT_MS = Number(process.env.ASSISTANT_TIMEOUT_MS ?? 60_000);
+const MODEL      = process.env.ASSISTANT_MODEL      ?? "qwen3.8-27b";
+const TIMEOUT_MS = Number(process.env.ASSISTANT_TIMEOUT_MS ?? 120_000);
 
 function log(msg) {
   process.stderr.write(`[assistant-bridge] ${msg}\n`);
