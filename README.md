@@ -48,6 +48,12 @@ Codex carried out the hands-on work:
 - Prepared load and localhost API commands, attempted model loading, and inspected the runtime logs.
 - Updated the README and setup guide, then created a documentation branch and pull request for review.
 
-The setup session confirmed an M5 Pro Mac with 48 GB of memory. The model download was verified, but inference and benchmark performance were not: model loading failed with `ggml_metal_init: failed to create command queue` in the Codex session. Running the load commands from a normal macOS Terminal is the next troubleshooting step.
+The setup session confirmed an M5 Pro Mac with 48 GB of memory. Codex verified the model download, loaded Qwen3.8-27B with Metal GPU offload, and confirmed real responses from both the local API and the MCP `ask_assistant` tool. Initially, the sandboxed runtime failed with `ggml_metal_init: failed to create command queue`; starting the installed daemon outside that sandbox resolved the error.
 
-ChatGPT and Codex helped prepare the environment and documentation. Qwen3.8-27B runs through LM Studio’s local API once the model loads successfully.
+ChatGPT and Codex helped prepare and verify the environment and documentation. Qwen3.8-27B serves responses through LM Studio’s local API.
+
+## Editor assistant bridge
+
+Install the bridge dependencies with `npm ci` in `documents/Repo/assistant-bridge`, then open this repository root in Cursor or VS Code. Both MCP configurations use `qwen3.8-27b` on `http://127.0.0.1:1234/v1`. See the [bridge README](documents/Repo/assistant-bridge/README.md) for configuration and tool usage.
+
+Benchmark TTFT includes streamed reasoning when the model emits it, so decode time covers the same token generation reported by the API. Chunk counts remain approximate when the API omits usage.
