@@ -3,11 +3,14 @@
     "assistant": {
       "type": "stdio",
       "command": "node",
-      "args": ["${workspaceFolder}/documents/Repo/assistant-bridge/mcp-assistant.mjs"],
+      "args": [
+        "${workspaceFolder}/documents/Repo/assistant-bridge/mcp-assistant.mjs"
+      ],
       "env": {
-        "ASSISTANT_API_BASE": "http://localhost:1234/v1",
-        "ASSISTANT_API_KEY": "lm-studio",
-        "ASSISTANT_MODEL": "qwen/qwen3.8-27b"
+        "ASSISTANT_API_BASE": "http://127.0.0.1:1234/v1",
+        "ASSISTANT_API_KEY": "",
+        "ASSISTANT_MODEL": "qwen3.8-27b",
+        "ASSISTANT_TIMEOUT_MS": "120000"
       }
     }
   }
