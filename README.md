@@ -35,3 +35,19 @@ python3 scripts/benchmark_lmstudio.py \
 ```
 
 Stdlib only — no extra Python packages required. Benchmark results depend on your hardware, runtime, and context settings.
+
+## How we used ChatGPT and Codex
+
+We used ChatGPT and Codex as assistants for a conversational setup workflow: discuss the goal, choose the model, perform the setup, check the results, and document the outcome. The user chose Qwen3.8-27B and directed the changes.
+
+Codex carried out the hands-on work:
+
+- Read the existing repository instructions through the signed-in GitHub browser when command-line Git authentication was unavailable.
+- Checked the Mac and installed LM Studio’s headless runtime (`llmster`) and `lms` CLI.
+- Downloaded Qwen3.8-27B Q4_K_M and verified its published file size and SHA-256 checksum.
+- Prepared load and localhost API commands, attempted model loading, and inspected the runtime logs.
+- Updated the README and setup guide, then created a documentation branch and pull request for review.
+
+The setup session confirmed an M5 Pro Mac with 48 GB of memory. The model download was verified, but inference and benchmark performance were not: model loading failed with `ggml_metal_init: failed to create command queue` in the Codex session. Running the load commands from a normal macOS Terminal is the next troubleshooting step.
+
+ChatGPT and Codex helped prepare the environment and documentation. Qwen3.8-27B runs through LM Studio’s local API once the model loads successfully.
