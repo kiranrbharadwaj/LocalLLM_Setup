@@ -14,7 +14,7 @@ from typing import Any
 
 
 DEFAULT_BASE_URL = "http://127.0.0.1:1234"
-DEFAULT_MODEL = "qwen/qwen3.5-9b"
+DEFAULT_MODEL = "qwen3.8-27b"
 DEFAULT_PROMPT = (
     "Write a short paragraph explaining quantization in local LLMs."
 )
@@ -185,10 +185,12 @@ def stream_chat_completion(
             choices = obj.get("choices") or []
             delta = choices[0].get("delta", {}) if choices else {}
             content = delta.get("content") or ""
-            if content:
+            reasoning = delta.get("reasoning_content") or delta.get("reasoning") or ""
+            if content or reasoning:
                 if ttft is None:
                     ttft = time.perf_counter() - t0
                 chunk_tokens += 1
+            if content:
                 text_parts.append(content)
 
             usage = obj.get("usage")
@@ -227,7 +229,7 @@ def print_summary(result: dict[str, Any], *, label: str = "timed run") -> None:
     if ttft is not None:
         print(f"TTFT:              {ttft * 1000:.0f} ms")
     else:
-        print("TTFT:              n/a (no content chunks received)")
+        print("TTFT:              n/a (no content or reasoning chunks received)")
     print(f"Total wall time:   {elapsed:.2f} s")
     print(f"Decode time:       {decode_time:.2f} s  (wall − TTFT)")
     print(f"Completion tokens: {tokens}  [{result['token_source']}]")
