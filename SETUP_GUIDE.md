@@ -8,6 +8,7 @@ This guide helps you set up a local AI development environment on your MacBook P
 2. **Cursor**: An AI-powered code editor.
 3. **GitHub CLI (`gh`)**: For managing your code and backups.
 4. **Python 3**: Pre-installed on macOS.
+5. **Node.js 18+ and npm**: Required by the assistant bridge.
 
 ## 👣 Step-by-Step Setup
 
@@ -25,18 +26,20 @@ lms server start --port 1234 --bind 127.0.0.1
 
 The API base URL is `http://127.0.0.1:1234/v1`, and the model identifier is `qwen3.8-27b`.
 
-### 2. Set Up the Repository
-```bash
-# Clone the setup repo
-git clone https://github.com/kiranrbharadwaj/LocalLLM_Setup.git
-cd LocalLLM_Setup
-```
-
-### 3. Authenticate GitHub
+### 2. Authenticate GitHub
 ```bash
 gh auth login
+gh auth setup-git
 ```
-Follow the prompts to log in via your browser.
+Follow the prompts to log in via your browser. Browser sign-in alone does not authenticate command-line Git.
+
+### 3. Set Up the Repository
+```bash
+git clone https://github.com/kiranrbharadwaj/LocalLLM_Setup.git
+cd LocalLLM_Setup
+npm --prefix documents/Repo/assistant-bridge ci
+```
+Open the repository root in Cursor or VS Code to use its MCP configuration. See the [bridge README](documents/Repo/assistant-bridge/README.md) for tool usage and environment settings.
 
 ### 4. Benchmark Your Hardware
 Verify that your local setup is running efficiently:
