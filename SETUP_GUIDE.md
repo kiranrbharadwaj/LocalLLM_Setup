@@ -8,32 +8,43 @@ This guide helps you set up a local AI development environment on your MacBook P
 2. **Cursor**: An AI-powered code editor.
 3. **GitHub CLI (`gh`)**: For managing your code and backups.
 4. **Python 3**: Pre-installed on macOS.
+5. **Node.js 18+ and npm**: Required by the assistant bridge.
 
 ## 👣 Step-by-Step Setup
 
 ### 1. Install & Configure LM Studio
 - Download and install [LM Studio](https://lmstudio.ai/).
-- Search for a model (e.g., `Qwen 2.5 7B` or `Llama 3.1 8B`).
-- **Pro Tip**: Look for "GGUF" versions. Since we have 48GB of RAM, we can handle medium-sized models comfortably.
-- Go to the **Local Server** tab (↔️ icon) and click **Start Server**. This makes the model available via an API.
+- Search for **Qwen3.8-27B** and select the **Q4_K_M GGUF** version from [lmstudio-community/Qwen3.8-27B-GGUF](https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF).
+- Download `Qwen3.8-27B-Q4_K_M.gguf` (approximately 16.8 GB).
+- Start with an 8,192-token context on a 48 GB Mac and adjust it according to available memory.
+- Load the model, then start the local API. With the LM Studio `lms` CLI installed:
 
-### 2. Set Up the Repository
 ```bash
-# Clone the setup repo
-git clone https://github.com/kiranrbharadwaj/LocalLLM_Setup.git
-cd LocalLLM_Setup
+lms load qwen3.8-27b --identifier qwen3.8-27b --context-length 8192 --gpu max --yes
+lms server start --port 1234 --bind 127.0.0.1
 ```
 
-### 3. Authenticate GitHub
+The API base URL is `http://127.0.0.1:1234/v1`, and the model identifier is `qwen3.8-27b`.
+
+### 2. Authenticate GitHub
 ```bash
 gh auth login
+gh auth setup-git
 ```
-Follow the prompts to log in via your browser.
+Follow the prompts to log in via your browser. Browser sign-in alone does not authenticate command-line Git.
+
+### 3. Set Up the Repository
+```bash
+git clone https://github.com/kiranrbharadwaj/LocalLLM_Setup.git
+cd LocalLLM_Setup
+npm --prefix documents/Repo/assistant-bridge ci
+```
+Open the repository root in Cursor or VS Code to use its MCP configuration. See the [bridge README](documents/Repo/assistant-bridge/README.md) for tool usage and environment settings.
 
 ### 4. Benchmark Your Hardware
 Verify that your local setup is running efficiently:
 ```bash
-python3 scripts/benchmark_lmstudio.py --show-response
+python3 scripts/benchmark_lmstudio.py --model qwen3.8-27b --show-response
 ```
 **What to look for:**
 - **TTFT**: Should be low (fast response start).

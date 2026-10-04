@@ -1,24 +1,188 @@
 # Local LLM Setup
 
-Notes and scripts for running local models on Apple Silicon (LM Studio).
+Run **Qwen3.8-27B Q4_K_M** on Apple Silicon through LM Studio, then connect Cursor or VS Code through the included MCP assistant bridge. This walkthrough records the repository review, fixes, and checks so the next person can reproduce the setup.
 
-## Benchmark LM Studio (TTFT / decode)
+## What is in this repository
 
-With LM Studio’s local server running (default `http://127.0.0.1:1234`) and a model loaded:
+All ten project-owned files were read during setup. Installed third-party dependency source was not exhaustively audited.
+
+| File | Purpose |
+| --- | --- |
+| `README.md` | End-to-end setup, verification, and troubleshooting |
+| `SETUP_GUIDE.md` | Installation and GitHub authentication details |
+| `scripts/benchmark_lmstudio.py` | Streaming API benchmark using only Python's standard library |
+| `.cursor/mcp.json` | Cursor MCP server configuration |
+| `.vscode/mcp.json` | VS Code MCP server configuration |
+| `documents/Repo/assistant-bridge/README.md` | Bridge configuration and tool usage |
+| `documents/Repo/assistant-bridge/mcp-assistant.mjs` | Stdio MCP server exposing `ask_assistant` |
+| `documents/Repo/assistant-bridge/.env.example` | Example environment variables; not loaded automatically |
+| `documents/Repo/assistant-bridge/package.json` | Node requirements, start command, and dependency declaration |
+| `documents/Repo/assistant-bridge/package-lock.json` | Dependency versions used by `npm ci` |
+
+Run the commands below from the **repository root**, unless a step says otherwise. Open that same folder in your editor; opening only the bridge subfolder prevents discovery of the root MCP configuration.
+
+## 1. Prepare the machine and clone
+
+You need an Apple Silicon Mac, Git, Node.js **18 or newer** with npm, Python 3, and enough storage for the approximately **16.8 GB** model plus runtime and dependencies. The verified machine had an **M5 Pro and 48 GB memory**; smaller machines may need different model or context settings.
+
+Check prerequisites:
 
 ```bash
-python3 scripts/benchmark_lmstudio.py
+node --version
+npm --version
+python3 --version
+git --version
 ```
 
-Useful flags:
+Authenticate Git before cloning this private repository. With the GitHub CLI installed, HTTPS authentication is:
+
+```bash
+gh auth login
+gh auth setup-git
+git clone https://github.com/kiranrbharadwaj/LocalLLM_Setup.git
+cd LocalLLM_Setup
+```
+
+Alternatively, configure a GitHub SSH key and clone `git@github.com:kiranrbharadwaj/LocalLLM_Setup.git`. Being signed in to GitHub in a browser does not authenticate command-line Git. See [SETUP_GUIDE.md](SETUP_GUIDE.md) for more detail.
+
+## 2. Install LM Studio and download the model
+
+Choose either the [LM Studio desktop app](https://lmstudio.ai/download) or its headless runtime. This setup used **llmster**, so the desktop app was not required. To install the headless runtime using LM Studio's official installer:
+
+```bash
+curl -fsSL https://lmstudio.ai/install.sh | bash
+export PATH="$HOME/.lmstudio/bin:$PATH"
+lms --help
+lms daemon up
+```
+
+Add the PATH entry to your shell configuration if needed for future terminals. For the desktop app, use its CLI setup instructions if `lms` is not available.
+
+Download **`Qwen3.8-27B-Q4_K_M.gguf`** from [lmstudio-community/Qwen3.8-27B-GGUF](https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF). In the desktop app, select that exact quantization. The CLI can present the repository's GGUF choices:
+
+```bash
+lms get https://huggingface.co/lmstudio-community/Qwen3.8-27B-GGUF --gguf --select
+```
+
+Select **Q4_K_M**. This setup did not install Qwen2.5. The verified file was stored at:
+
+```text
+~/.lmstudio/models/lmstudio-community/Qwen3.8-27B-GGUF/Qwen3.8-27B-Q4_K_M.gguf
+```
+
+The downloaded file was **16,810,714,336 bytes**, with SHA-256:
+
+```text
+e00082f779fa385cee8c68a3ec8833a75778cc87272240b942f74e0b8243e520
+```
+
+Verify your copy with `shasum -a 256` and compare it with the publisher's metadata for the same file revision.
+
+## 3. Load the model and start the API
+
+```bash
+lms daemon up
+lms load qwen3.8-27b --identifier qwen3.8-27b --context-length 8192 --gpu max --yes
+lms server start --port 1234 --bind 127.0.0.1
+```
+
+The explicit identifier **`qwen3.8-27b`** must match the bridge configuration. An 8,192-token context with full GPU offload worked on the verified 48 GB Mac; adjust according to available memory.
+
+Confirm the model is visible, then ask for a real response:
+
+```bash
+curl -fsS http://127.0.0.1:1234/v1/models
+curl -fsS http://127.0.0.1:1234/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"qwen3.8-27b","messages":[{"role":"user","content":"Reply with: Local model is ready."}],"max_tokens":256}'
+```
+
+The server binds to localhost. The verified configuration did not require an API key.
+
+## 4. Install and connect the assistant bridge
+
+From the repository root:
+
+```bash
+npm --prefix documents/Repo/assistant-bridge ci
+```
+
+Rebuild dependencies from the lockfile even if the checkout includes `node_modules`; copied dependencies are not a substitute for a clean installation. The setup installed 94 packages, with MCP SDK 1.30.1 selected by the lockfile; npm reported no known vulnerabilities at that time.
+
+Both editor configurations and the bridge defaults were aligned to:
+
+| Setting | Value |
+| --- | --- |
+| `ASSISTANT_API_BASE` | `http://127.0.0.1:1234/v1` |
+| `ASSISTANT_MODEL` | `qwen3.8-27b` |
+| `ASSISTANT_API_KEY` | Empty for this local server |
+| `ASSISTANT_TIMEOUT_MS` | `120000` |
+
+The bridge reads **process environment variables**. Copying `.env.example` to `.env` alone does not configure it: export variables or edit the MCP configuration's `env` object. Use an API key only if your server requires one.
+
+Open the repository root in Cursor or VS Code, enable/start the configured MCP server, and allow the editor to use **`ask_assistant`**. That tool accepts a required `prompt` string and optional `context` string. Node must be available to the editor process. VS Code uses `${workspaceFolder}` in the bridge path; Cursor uses a path relative to the repository root.
+
+`npm start` inside the bridge folder starts a stdio MCP server and waits for a client; it is not an interactive chat prompt. Diagnostics go to stderr because stdout carries the MCP protocol. See the [bridge README](documents/Repo/assistant-bridge/README.md) for further details.
+
+## 5. Verify and benchmark
+
+With the API running, from the repository root:
 
 ```bash
 python3 scripts/benchmark_lmstudio.py \
-  --model qwen/qwen3.5-9b \
+  --model qwen3.8-27b \
   --max-tokens 200 \
   --warmup 1 \
   --check-memory \
   --show-response
 ```
 
-Stdlib only — no extra Python packages required.
+No Python packages need to be installed. If changing the endpoint, pass **`--base-url http://127.0.0.1:1234`**, without `/v1`: the benchmark appends `/v1/chat/completions`. The bridge's API base, by contrast, includes `/v1`.
+
+The benchmark was fixed to start TTFT timing on the first **reasoning or answer** chunk. Previously, starting only on answer text could inflate decode speed because API token usage also includes reasoning. Chunk counts are approximate when the API omits usage.
+
+The setup verified:
+
+- Model file size and published SHA-256 matched.
+- The model loaded with Metal GPU offload and an 8,192-token context.
+- A real local API request returned “Local model is ready.”
+- An MCP SDK client listed `ask_assistant`, called it through the stdio bridge, and received “MCP bridge is ready.”
+- Node syntax and a reasoning-first streaming regression check passed.
+- One short smoke benchmark recorded approximately **322 ms TTFT** and **26 tokens/second**. This is not a representative performance benchmark; results depend on prompt, model runtime, and hardware.
+
+Editor-specific MCP activation and automatic tool selection still require verification in your own editor. A working API and bridge do not by themselves confirm editor integration.
+
+## Troubleshooting and restarting
+
+| Symptom | Resolution learned during setup |
+| --- | --- |
+| Git clone requests credentials or fails over SSH | Authenticate Git separately from the browser; use HTTPS with `gh auth setup-git`, or configure an SSH key. |
+| `lms: command not found` | Add `$HOME/.lmstudio/bin` to PATH for the headless installation, or complete the desktop app's CLI setup. |
+| `ggml_metal_init: failed to create command queue` in an agent sandbox | The sandboxed daemon could not initialize Metal. Stop that daemon and start `lms daemon up` from a normal host Terminal with the required permissions, then retry loading. This resolved the observed error. |
+| Connection refused on port 1234 | Start the daemon, load the model, and start the server; check the server's port. |
+| Model not found by API or bridge | Check `/v1/models` and load using the explicit `--identifier qwen3.8-27b`. |
+| Benchmark requests a doubled `/v1` path | Give its `--base-url` the origin only; bridge `ASSISTANT_API_BASE` includes `/v1`. |
+| Editor cannot find the bridge or Node | Open the repository root, run `npm ci`, and ensure the editor can resolve `node`. |
+| Editing `.env` has no effect | Export the variables or update the editor MCP `env` values; the script does not load `.env` files. |
+| Bridge appears idle after `npm start` | Connect an MCP client/editor; the bridge waits for stdio protocol messages. |
+| Requests time out | Confirm API inference works first, then adjust the 120,000 ms bridge timeout if your workload needs more time. |
+
+After restarting the Mac or daemon, repeat the three commands in step 3. To stop the local API:
+
+```bash
+lms server stop
+```
+
+To stop the runtime as well:
+
+```bash
+lms daemon down
+```
+
+## How we used ChatGPT and Codex
+
+We used ChatGPT and Codex for a conversational workflow: discuss the goal, choose the model, perform setup, check results, and document the outcome. The user chose **Qwen3.8-27B** and directed the changes.
+
+Codex read every project-owned file through the signed-in GitHub browser when command-line Git authentication was unavailable, reconstructed a local working snapshot, checked the Mac, installed llmster and the CLI, downloaded and verified the model, and diagnosed the Metal sandbox failure. It then aligned the model, endpoint, and timeout across the bridge and editor configurations, corrected reasoning-aware benchmark timing, and verified actual API and MCP responses.
+
+The changes were submitted in [pull request #2](https://github.com/kiranrbharadwaj/LocalLLM_Setup/pull/2), including this walkthrough. The runtime installation and model download are local machine state; cloning the repository does not install them. ChatGPT and Codex assisted with setup and verification; **Qwen3.8-27B** serves the local model responses.
