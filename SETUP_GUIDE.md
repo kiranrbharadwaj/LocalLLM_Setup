@@ -50,6 +50,16 @@ python3 scripts/benchmark_lmstudio.py --model qwen3.8-27b --show-response
 - **TTFT**: Should be low (fast response start).
 - **Decode Speed**: Higher is better (more tokens per second).
 
+### 5. Install Open WebUI (browser chat)
+From the repository root, on macOS or Linux:
+
+```bash
+bash scripts/setup_openwebui.sh
+bash scripts/start_openwebui.sh
+```
+
+Keep LM Studio's API running. Open http://127.0.0.1:3000, create your first local administrator account, select `qwen3.8-27b`, and start chatting. The installer pins Open WebUI 0.11.4 and uses isolated Python 3.11 through uv; no Docker or Ollama installation is needed. Private state is stored in `.local/open-webui/`, excluded from Git. Ctrl+C stops the UI; rerun the start script after a restart. See [README step 6](README.md#6-install-open-webui-for-browser-chat) for configuration, backups, and troubleshooting.
+
 ## 📚 Key Concepts for Beginners
 - **Quantization**: The process of compressing a model so it fits in RAM without losing too much intelligence.
 - **Unified Memory**: Because we have Apple Silicon, our GPU and CPU share the same 48GB of RAM, which is why we can run larger models than most laptops.
