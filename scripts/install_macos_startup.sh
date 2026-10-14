@@ -17,7 +17,7 @@ command -v python3 >/dev/null || { echo 'Python 3 is required.' >&2; exit 1; }
 mkdir -p "$SUPPORT" "$LOGS"
 cp "$ROOT/scripts/start-qwen.sh" "$SUPPORT/start-qwen.sh"
 python3 - "$PLIST" <<'PY'
-import plistlib,sys
+import os,plistlib,sys
 from pathlib import Path
 home=Path.home()
 config={
@@ -26,7 +26,7 @@ config={
  'RunAtLoad':True,
  'KeepAlive':{'SuccessfulExit':False},
  'ThrottleInterval':30,
- 'EnvironmentVariables':{'HOME':str(home),'PATH':f'{home}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'},
+ 'EnvironmentVariables':{'HOME':str(home),'QWEN_CONTEXT_LENGTH':os.environ.get('QWEN_CONTEXT_LENGTH','32768'),'PATH':f'{home}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'},
  'StandardOutPath':str(home/'Library/Logs/LocalLLM/startup.log'),
  'StandardErrorPath':str(home/'Library/Logs/LocalLLM/startup-error.log'),
 }
