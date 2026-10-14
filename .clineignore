@@ -1,0 +1,6 @@
+.local/
+**/node_modules/
+.git/
+**/__pycache__/
+.env
+.webui_secret_key
