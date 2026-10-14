@@ -46,7 +46,11 @@ Cline configuration is stored in `~/.cline/data/globalState.json`. The configura
 
 ## Use and verify Cline
 
-Open VS Code, open your project folder, and click the **Cline icon in the left sidebar**. Use that panel rather than VS Code's Copilot Chat or Cursor Agent. No Cline cloud API key or subscription is needed for the configured local provider.
+Open VS Code, open your project folder, and click the **Cline icon in the left sidebar**. Use that panel rather than VS Code's Copilot Chat or Cursor Agent. Press **Cmd+'** with no editor selection to focus Cline. With a selection, that shortcut sends the selected text to Cline.
+
+Cline and Copilot are separate interfaces: Qwen is not expected in Copilot's model dropdown. The installer sets the global User preference `"chat.disableAIFeatures": true` to hide Copilot's built-in UI while keeping Cline active. Cline's Plan/Act provider choices are global, so opening another project in the same VS Code profile retains Qwen. The sidebar layout can vary between windows; click Cline or use its shortcut. If using a separate VS Code profile, install/enable Cline in that profile too.
+
+Existing plain JSON VS Code preferences are preserved and backed up before this change. If settings contain JSON comments, the helper leaves the file unchanged and asks you to set the preference manually. To restore Copilot, set `chat.disableAIFeatures` to `false`. No Cline cloud API key or subscription is needed for the configured local provider.
 
 Check Cline Settings → API Configuration:
 
