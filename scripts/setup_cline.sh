@@ -30,5 +30,6 @@ if [[ -z "$CODE" ]]; then
 fi
 "$CODE" --install-extension saoudrizwan.claude-dev@4.1.24 --force
 python3 "$ROOT/scripts/configure_cline.py"
+python3 "$ROOT/scripts/configure_vscode.py"
 echo 'Ready: open VS Code, open your project, and use the Cline sidebar.'
 echo 'Both Plan and Act use LM Studio. Use Cline, not Copilot Chat or Cursor Agent.'
