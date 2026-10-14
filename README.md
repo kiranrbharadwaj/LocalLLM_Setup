@@ -4,12 +4,15 @@ Run **Qwen3.8-27B Q4_K_M** on Apple Silicon through LM Studio, then connect Curs
 
 ## What is in this repository
 
-All ten project-owned files were read during setup. Installed third-party dependency source was not exhaustively audited.
+All ten original project-owned files were read during the initial setup. Open WebUI scripts and local-state exclusions were added afterward. Installed third-party dependency source was not exhaustively audited.
 
 | File | Purpose |
 | --- | --- |
 | `README.md` | End-to-end setup, verification, and troubleshooting |
 | `SETUP_GUIDE.md` | Installation and GitHub authentication details |
+| `scripts/setup_openwebui.sh` | Installs pinned Open WebUI with isolated Python 3.11 |
+| `scripts/start_openwebui.sh` | Starts the localhost chat UI connected to LM Studio |
+| `.gitignore` | Excludes machine-local environments, chats, caches, and secrets |
 | `scripts/benchmark_lmstudio.py` | Streaming API benchmark using only Python's standard library |
 | `.cursor/mcp.json` | Cursor MCP server configuration |
 | `.vscode/mcp.json` | VS Code MCP server configuration |
@@ -151,6 +154,33 @@ The setup verified:
 - One short smoke benchmark recorded approximately **322 ms TTFT** and **26 tokens/second**. This is not a representative performance benchmark; results depend on prompt, model runtime, and hardware.
 
 Editor-specific MCP activation and automatic tool selection still require verification in your own editor. A working API and bridge do not by themselves confirm editor integration.
+
+## 6. Install Open WebUI for browser chat
+
+Open WebUI is a browser interface to the same LM Studio API. It does not require Ollama or the Cursor MCP bridge. With Git authenticated and this repository cloned, run from its root on macOS or Linux:
+
+```bash
+bash scripts/setup_openwebui.sh
+bash scripts/start_openwebui.sh
+```
+
+The setup script installs **Open WebUI 0.11.4** into `.local/open-webui/venv`. It uses an existing `uv` if available; otherwise it downloads uv's official installer and keeps uv inside `.local/open-webui/bin`. uv provides Python **3.11** without replacing macOS's system Python. Internet access is required for installation. Open WebUI's direct version is pinned; transitive dependencies are resolved by uv at installation time.
+
+Keep LM Studio running as described in step 3. Open **http://127.0.0.1:3000**, create your own first administrator account, select **qwen3.8-27b**, and ask a question. Authentication remains enabled; your account and password are local to this Open WebUI installation. The first account is the administrator, so complete this step before inviting other users.
+
+The launcher binds only to `127.0.0.1`, connects to `http://127.0.0.1:1234/v1`, and supplies `lm-studio` as a placeholder API key for the local server that does not require authentication. It disables the unused Ollama connection and selects `qwen3.8-27b` as the default model. If you enable authentication on LM Studio later, export `LMSTUDIO_API_KEY` with your actual key before starting the UI; keep it out of Git.
+
+Chats, users, uploads, settings, the persistent session key, Python, and caches live under **`.local/open-webui/`**, excluded by `.gitignore`. Back up this entire directory while the server is stopped. Cloning the repository installs none of these automatically: run the setup script once, and rerun the start script after restarting your machine. Keep the start terminal open; **Ctrl+C** stops Open WebUI. There is no automatic login-start service.
+
+Basic health check:
+
+```bash
+curl -fsS http://127.0.0.1:3000/health
+```
+
+This launcher uses offline mode to avoid automatic model downloads. Basic chat uses the already-running LM Studio model; local document embeddings, speech, and other features needing additional models require separate configuration. If the model list is empty, check LM Studio's `/v1/models` first, then check Open WebUI **Admin Panel → Settings → Connections** for the local URL. Saved settings can override initial environment defaults. If port 3000 is occupied, stop the existing service or change the launcher's port. A first-start import/migration can take longer than later starts.
+
+Installation follows the official [Open WebUI Python/uv instructions](https://docs.openwebui.com/getting-started/quick-start/) and [environment configuration reference](https://docs.openwebui.com/reference/env-configuration/).
 
 ## Troubleshooting and restarting
 

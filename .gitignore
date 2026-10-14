@@ -1,0 +1,6 @@
+# Machine-local environments, chats, databases, logs, caches and secrets
+.local/
+__pycache__/
+*.pyc
+.webui_secret_key
+.env
