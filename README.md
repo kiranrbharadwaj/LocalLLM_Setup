@@ -2,6 +2,18 @@
 
 Run **Qwen3.8-27B Q4_K_M** on Apple Silicon through LM Studio, then connect Cursor or VS Code through the included MCP assistant bridge. This walkthrough records the repository review, fixes, and checks so the next person can reproduce the setup.
 
+## Default setup: local coding without Cursor Agent quotas
+
+Follow [SETUP_GUIDE.md](SETUP_GUIDE.md). After installing LM Studio's CLI, downloading Qwen3.8-27B Q4_K_M, and providing Git, Python 3, Node.js 18+, and npm, quit VS Code/Cline and run in a normal Mac Terminal:
+
+```bash
+bash scripts/setup_local.sh
+```
+
+This installs/configures VS Code + Cline 4.1.24 for **local Qwen in both Plan and Act**, loads **32,768-token context with one concurrent request**, enables macOS login startup, installs the optional bridge dependencies, and installs Open WebUI. Use the **Cline sidebar** for local coding. Cursor Agent still uses its selected cloud model even when it calls `ask_assistant`; that bridge does not bypass Cursor usage limits.
+
+The default is tested on a 48 GB Apple Silicon Mac (32K memory estimate: 21.02 GiB). Smaller machines must select a lower context explicitly; see the setup guide. Cline state is backed up and merged while the editor is closed. Open WebUI account creation remains a user step, and its server starts separately. Installation requires internet access and running the setup command; cloning alone does not install anything.
+
 ## What is in this repository
 
 All ten original project-owned files were read during the initial setup. Open WebUI scripts and local-state exclusions were added afterward. Installed third-party dependency source was not exhaustively audited.
@@ -9,7 +21,13 @@ All ten original project-owned files were read during the initial setup. Open We
 | File | Purpose |
 | --- | --- |
 | `README.md` | End-to-end setup, verification, and troubleshooting |
-| `SETUP_GUIDE.md` | Installation and GitHub authentication details |
+| `SETUP_GUIDE.md` | Default Cline setup, prerequisites, context sizing, and verification |
+| `scripts/setup_local.sh` | Default setup orchestration |
+| `scripts/setup_cline.sh` | Installs VS Code and pinned Cline |
+| `scripts/configure_cline.py` | Backs up and merges local Plan/Act provider settings |
+| `.clineignore` | Excludes dependencies and private state from Cline context |
+| `.vscode/extensions.json` | Recommends the Cline extension |
+| `tests/test_configure_cline.py` | Configuration preservation and failure tests |
 | `scripts/start-qwen.sh` | Repeatable Qwen and localhost API launcher |
 | `scripts/install_macos_startup.sh` | Installs and updates the macOS login job |
 | `scripts/setup_openwebui.sh` | Installs pinned Open WebUI with isolated Python 3.11 |
@@ -87,11 +105,11 @@ Verify your copy with `shasum -a 256` and compare it with the publisher's metada
 
 ```bash
 lms daemon up
-lms load qwen3.8-27b --identifier qwen3.8-27b --context-length 8192 --gpu max --yes
+lms load qwen3.8-27b --identifier qwen3.8-27b --context-length 32768 --gpu max --parallel 1 --yes
 lms server start --port 1234 --bind 127.0.0.1
 ```
 
-The explicit identifier **`qwen3.8-27b`** must match the bridge configuration. An 8,192-token context with full GPU offload worked on the verified 48 GB Mac; adjust according to available memory.
+The explicit identifier **`qwen3.8-27b`** must match the bridge configuration. The default is now 32,768 tokens with one concurrent request, validated on the 48 GB Mac. See the setup guide for memory estimates and smaller-machine overrides.
 
 Confirm the model is visible, then ask for a real response:
 
@@ -193,7 +211,7 @@ zsh scripts/start-qwen.sh
 bash scripts/install_macos_startup.sh
 ```
 
-The launcher reuses `qwen3.8-27b` if already loaded, avoiding “A model with identifier qwen3.8-27b already exists.” Otherwise it loads the model with 8,192-token context and full GPU offload. It starts the localhost API on port 1234 when it is not already responding. Python 3 and curl are required; `lms` is expected at `$HOME/.lmstudio/bin/lms`.
+The launcher reuses a matching `qwen3.8-27b` configuration, avoiding duplicate-identifier errors. It defaults to 32,768 tokens, full GPU offload, and one concurrent request. An idle mismatched model is unloaded and reloaded; a busy one is left running and setup stops with instructions. It starts the localhost API on port 1234 when it is not already responding. Python 3 and curl are required; `lms` is expected at `$HOME/.lmstudio/bin/lms`.
 
 The installer creates a per-user LaunchAgent: startup occurs **after login**, not before login at system boot. No sudo is required. It copies the launcher to `~/Library/LaunchAgents/LocalLLM/start-qwen.sh`, generates `~/Library/LaunchAgents/com.kiran.local-qwen.plist` with your home directory, and activates it immediately. Failed attempts retry with a 30-second throttle. After success, the launcher exits while LM Studio keeps running; it does not continuously monitor the model or API.
 
